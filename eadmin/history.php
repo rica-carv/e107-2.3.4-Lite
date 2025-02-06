@@ -2,8 +2,9 @@
 
 // Generated e107 Plugin Admin Area 
 
-require_once('../class2.php');
-if (!getperms('0'))
+require_once(__DIR__.'/../class2.php');
+
+if (!getperms('7'))
 {
 	e107::redirect('admin');
 	exit;
@@ -385,5 +386,5 @@ require_once(e_ADMIN."auth.php");
 e107::getAdminUI()->runPage();
 
 require_once(e_ADMIN."footer.php");
-exit;
+
 
