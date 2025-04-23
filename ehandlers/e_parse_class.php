@@ -318,7 +318,7 @@ class e_parse
 	 * NOTE: can't be called until CHARSET is known
 	 * but we all know that it is UTF-8 now
 	 *
-	 * @return void
+	 * @return void|null
 	 */
 	public function setMultibyte($bool)
 	{
@@ -2224,7 +2224,7 @@ class e_parse
 	/**
 	 * Retrieve img tag width and height attributes for current thumbnail.
 	 *
-	 * @return string
+	 * @return string|null
 	 */
 	public function thumbDimensions($type = 'single')
 	{
@@ -2287,6 +2287,50 @@ class e_parse
 		return $this->thumbHeight;
 
 	}
+
+	/**
+	 * Sets a cache file for storing alternate text data for an image.
+	 *
+	 * @param string $path  The file path of the image whose alternate text is being cached.
+	 * @param string $value The alternate text value to cache.
+	 * @return string|false String or false on failure
+	 */
+	public function setImageAltCacheFile($path, $value)
+	{
+		$cache_str = sha1($path);
+
+		$pre = 'alt_';
+		$post = '.cache.txt';
+
+		$file = e_CACHE_IMAGE .'alt_' . sha1($path) . '.cache.txt';
+
+		if (file_put_contents($file, $value) !== false)
+		{
+            return $file;
+        }
+
+        return false;
+
+	}
+
+	/**
+	 * Retrieves the content of the alternative cache file for the specified path if it exists.
+	 *
+	 * @param string $path The file path to generate the cache filename for.
+	 * @return string|null The content of the cache file if it exists, or null if the file does not exist.
+	 */
+	public function getImageAltCacheFile($path)
+	{
+	    $file = e_CACHE_IMAGE .'alt_' . sha1($path) . '.cache.txt';
+
+	    if (file_exists($file))
+	    {
+	        return file_get_contents($file);
+	    }
+
+	    return null;
+	}
+
 
 	/**
 	 * Generated a Thumb Cache File Name from path and options.
@@ -4527,8 +4571,9 @@ class e_parse
 	 *  'legacy'    => (array)		 Usually a legacy path like {e_FILE}
 	 *  'type'		=> (array)		 Force the returned image to be a jpg, webp etc.
 	 * ]
-	 * @return string
+	 *
 	 * @example $tp->toImage('welcome.png', array('legacy'=>{e_IMAGE}newspost_images/','w'=>200));
+	 * @return string|null
 	 */
 	public function toImage($file, $parm = array())
 	{
@@ -5069,7 +5114,7 @@ class e_parse
 	 *
 	 * @param int     $datestamp - unix timestamp
 	 * @param string  $format    - short | long | relative
-	 * @return string converted date (html)
+	 * @return string|null converted date (html)
 	 */
 	public function toDate($datestamp = null, $format = 'short')
 	{

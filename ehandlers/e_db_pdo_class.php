@@ -652,7 +652,7 @@ class e_db_pdo implements e_db
 	*
 	* @param string $table
 	* @param string $fields
-	* @param string|array $arg;
+	* @param string|array|false $arg;
 	*
 	* @example e107::getDb()->select("comments", "*", "comment_item_id = '$id' AND comment_type = '1' ORDER BY comment_datestamp");
 	* @example e107::getDb('sql2')->select("chatbox", "*", "ORDER BY cb_datestamp DESC LIMIT $from, ".$view, true);</code>
@@ -1052,9 +1052,9 @@ class e_db_pdo implements e_db
 
 
 	/**
-	* @return int number of affected rows, or false on error
+	* @return int|false number of affected rows, or false on error
 	* @param string $tableName - Name of table to access, without any language or general DB prefix
-	* @param array|string $arg  (array preferred)
+	* @param array|string|false $arg  (array preferred)
 	* @param bool $debug
 	* @desc Update fields in ONE table of the database corresponding to your $arg variable<br />
 	* <br />
@@ -1209,7 +1209,7 @@ class e_db_pdo implements e_db
 	 * Return a value for use in PDO bindValue() - based on field-type.
 	 * @param $type
 	 * @param $fieldValue
-	 * @return int|string
+	 * @return int|string|null
 	 */
 	private function _getPDOValue($type, $fieldValue)
 	{
@@ -1388,7 +1388,7 @@ class e_db_pdo implements e_db
 	 * @param bool   $debug
 	 * @param string $log_type
 	 * @param string $log_remark
-	 * @return int number of affected rows or false on error
+	 * @return int|false number of affected rows or false on error
 	 * @desc Count the number of rows in a select<br />
 	 * <br />
 	 * Example:<br />
@@ -1463,7 +1463,7 @@ class e_db_pdo implements e_db
 
 
 	/**
-	* @return int number of affected rows, or false on error
+	* @return int|false number of affected rows, or false on error
 	* @param string $table
 	* @param string $arg
 	* @desc Delete rows from a table<br />
@@ -2535,7 +2535,7 @@ class e_db_pdo implements e_db
 
 
 	/**
-	* @return string relating to error (empty string if no error)
+	* @return string|null relating to error (empty string if no error)
 	* @param string $from
 	* @desc Calling method from within this class
 	* @access private
