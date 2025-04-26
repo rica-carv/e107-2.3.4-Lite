@@ -636,6 +636,16 @@ function update_core_database($type = '')
 		$just_check = !($type == 'do');
 		$pref = e107::getPref();
 
+ 	
+		if(!$just_check)
+		{
+			if(e107::getConfig()->get('admincss') !== 'css/admin-exas-core.css')
+			{
+				e107::getConfig()->set('admincss','css/admin-exas-core.css')->save(false,true,false);
+				e107::getMessage()->addSuccess("Admin skin has been updated to Backend Lite Mode ");
+			}
+
+		}
 /*
 		if(!isset($pref['lan_global_list']['news']))
 		{

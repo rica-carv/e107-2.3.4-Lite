@@ -8,7 +8,7 @@
 		<core name="admin_navbar_labels">1</core>
 		<core name="admin_helptip">1</core>
 		<core name="admincode">0</core>		
-		<core name="admincss">css/modern-light.css</core>
+		<core name="admincss">css/modern-dark-2.css</core>
 		<core name="adminlanguage"></core>
 		<core name="adminpwordchange">0</core>
 		<core name="adminstyle">flexpanel</core>
