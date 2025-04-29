@@ -267,6 +267,8 @@ require_once(__DIR__.'/navigation_shortcodes_legacy.php');
 				// return "<img class='icon' src='".$path."' alt=''  />";	
 			}
 
+			return $tp->toIcon($this->var['link_button'], $opts);
+
 		}
 
 
