@@ -36,6 +36,7 @@ class e_marketplace
 		);
 	}	
 
+
 	/**
 	 * Read pluginpack.xml and return $xdata matching original marketplace format.
 	 * Fetches remote plugin.xml per entry to populate version, author, icon etc.
@@ -143,7 +144,7 @@ class e_marketplace
  
 			// Registry-level name and description (may be overridden by plugin.xml)
 			$registryName = isset($attr['name']) ? trim($attr['name']) : $folder;
-			$registryDesc = isset($node['description[0]']) ? trim($node['description[0]']) : '';
+			$registryDesc = $this->extractRegistryDescription($node);
 
 			$infourl = isset($attr['infourl']) ? trim($attr['infourl']) : '';
 
@@ -287,7 +288,57 @@ class e_marketplace
 	}
 
 
-	
+	/**
+	* Extract <description> text from the registry node produced by
+	* xmlClass::loadXMLfile($file, 'advanced'). xml2array yields any
+	* of four shapes depending on attributes and sibling count:
+	*   - string
+	*   - array with '@value' key
+	*   - indexed array of strings
+	*   - indexed array of arrays with '@value' keys
+	*
+	* @param  array $node  Single <plugin> or <theme> node from registry
+	* @return string       Trimmed description or '' if none usable
+	*/
+	private function extractRegistryDescription($node)
+	{
+		if (!isset($node['description']))
+		{
+			return '';
+		}
+
+		$d = $node['description'];
+
+		if (is_string($d))
+		{
+			return trim($d);
+		}
+
+		if (is_array($d))
+		{
+			if (isset($d['@value']))
+			{
+				return trim($d['@value']);
+			}
+
+			if (isset($d[0]))
+			{
+				$first = $d[0];
+
+				if (is_string($first))
+				{
+					return trim($first);
+				}
+
+				if (is_array($first) && isset($first['@value']))
+				{
+					return trim($first['@value']);
+				}
+			}
+		}
+
+		return '';
+	}
 
 	/**
 	 * Extract icon URL from parsed adminLinks.
