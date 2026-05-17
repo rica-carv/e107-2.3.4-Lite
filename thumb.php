@@ -89,8 +89,9 @@ class e_thumbpage
 		$mySQLprefix = '';
 
 		// Config
-
-		include($self.DIRECTORY_SEPARATOR.'e107_config.php');
+		// Capture return value to support v2.4+ array format. Legacy format declares
+		// globals ($mySQLdefaultdb, $ADMIN_DIRECTORY...) into local scope as before.
+		$config = include($self.DIRECTORY_SEPARATOR.'e107_config.php');
 
 		// support early include feature
 		if(!empty($CLASS2_INCLUDE))
@@ -100,6 +101,48 @@ class e_thumbpage
 
 
 		ob_end_clean(); // Precaution - clearout utf-8 BOM or any other garbage in e107_config.php
+
+		// v2.4+ array format: extract DB and path info from returned array
+		if(is_array($config) && !empty($config['paths']))
+		{
+			$mySQLdefaultdb = $config['database']['db'] ?? '';
+			$mySQLprefix    = $config['database']['prefix'] ?? '';
+
+			// Map lowercase keys ('admin', 'images', ...) to *_DIRECTORY locals so
+			// the compact() call below picks them up the same way as legacy format.
+			$pathKeyMap = [
+				'admin'      => 'ADMIN_DIRECTORY',
+				'files'      => 'FILES_DIRECTORY',
+				'images'     => 'IMAGES_DIRECTORY',
+				'themes'     => 'THEMES_DIRECTORY',
+				'plugins'    => 'PLUGINS_DIRECTORY',
+				'handlers'   => 'HANDLERS_DIRECTORY',
+				'languages'  => 'LANGUAGES_DIRECTORY',
+				'help'       => 'HELP_DIRECTORY',
+				'docs'       => 'DOCS_DIRECTORY',
+				'media'      => 'MEDIA_DIRECTORY',
+				'system'     => 'SYSTEM_DIRECTORY',
+				'cache'      => 'CACHE_DIRECTORY',
+				'logs'       => 'LOGS_DIRECTORY',
+				'downloads'  => 'DOWNLOADS_DIRECTORY',
+				'uploads'    => 'UPLOADS_DIRECTORY',
+				'core'       => 'CORE_DIRECTORY',
+				'web'        => 'WEB_DIRECTORY',
+			];
+			foreach($config['paths'] as $k => $v)
+			{
+				if(isset($pathKeyMap[$k]))
+				{
+					${$pathKeyMap[$k]} = $v;
+				}
+			}
+
+			if(!isset($E107_CONFIG) && !empty($config['other']))
+			{
+				$E107_CONFIG = $config['other'];
+			}
+		}
+		unset($config);
 
 		if(empty($HANDLERS_DIRECTORY))
 		{
