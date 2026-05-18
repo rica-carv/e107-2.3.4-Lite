@@ -1415,28 +1415,41 @@ class e_install
 		return $ret;
 	}
 
-	private function stage_7()
+	/**
+	 * Resolve any remaining "[hash]" placeholders in $this->e107->e107_dirs
+	 * and strip the duplicated site_path segment from the multisite
+	 * SYSTEM_DIRECTORY and MEDIA_DIRECTORY entries.
+	 *
+	 * Normally updatePaths() (called from stage_5) has already cleared every
+	 * "[hash]" before stage_7 runs, but if stage_7() or import_configuration()
+	 * is invoked without updatePaths() running first (e.g. a custom migration
+	 * script reusing install internals), the previous implementation left a
+	 * literal "[hash]" substring in every derived directory key. See #5631.
+	 *
+	 * @return null
+	 */
+	private function resolveSitePathPlaceholders()
 	{
-		global $e_forms;
-		$tp = e107::getParser();
-
-		// Replace [hash] placeholder with real site_path in ALL paths that may contain it.
-		// Previously only SYSTEM_DIRECTORY / MEDIA_DIRECTORY were handled, but CACHE_*
-		// and other derived dirs also contain [hash] and were left untouched, causing
-		// "failed to open stream" errors against ./esystem/[hash]/cache/db/*.php
-		foreach ($this->e107->e107_dirs as $key => $path)
+		foreach($this->e107->e107_dirs as $key => $path)
 		{
-			if (is_string($path) && strpos($path, '[hash]') !== false)
+			if(is_string($path) && strpos($path, '[hash]') !== false)
 			{
 				$this->e107->e107_dirs[$key] = str_replace('[hash]', $this->e107->site_path, $path);
 			}
 		}
 
-		// SYSTEM_DIRECTORY and MEDIA_DIRECTORY end up with a duplicated site_path segment
-		// after the replacement above (defaultDirs() appended site_path during init when
-		// it was still "[hash]"). Strip the trailing "/site_path" once.
-		$this->e107->e107_dirs['SYSTEM_DIRECTORY'] = str_replace("/" . $this->e107->site_path, "", $this->e107->e107_dirs['SYSTEM_DIRECTORY']);
-		$this->e107->e107_dirs['MEDIA_DIRECTORY']  = str_replace("/" . $this->e107->site_path, "", $this->e107->e107_dirs['MEDIA_DIRECTORY']);
+		$this->e107->e107_dirs['SYSTEM_DIRECTORY'] = str_replace("/".$this->e107->site_path,"",$this->e107->e107_dirs['SYSTEM_DIRECTORY']);
+		$this->e107->e107_dirs['MEDIA_DIRECTORY']  = str_replace("/".$this->e107->site_path,"",$this->e107->e107_dirs['MEDIA_DIRECTORY']);
+
+		return null;
+	}
+
+	private function stage_7()
+	{
+		global $e_forms;
+		$tp = e107::getParser();
+
+		$this->resolveSitePathPlaceholders();
 
 		$this->stage = 7;
 		installLog::add('Stage 7 started');
