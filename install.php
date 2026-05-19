@@ -1739,6 +1739,52 @@ return [
 	}
 
 	/**
+	 * Run the full install pipeline non-interactively for create_tables_unattended().
+	 *
+	 * Mirrors the install-time side effects of stage_8() (constants, htaccess
+	 * rename, filetypes.xml write, table creation, configuration import) but
+	 * without the form-rendering plumbing.
+	 *
+	 * @return array{errors: ?string, htaccess: string}
+	 */
+	public function runUnattendedInstall()
+	{
+		if(!defined('USERNAME'))
+		{
+			define('USERNAME', $this->previous_steps['admin']['user']);
+			define('USEREMAIL', $this->previous_steps['admin']['email']);
+		}
+
+		$this->setDb();
+
+		if(!defined('THEME'))
+		{
+			define('THEME', e_THEME.$this->previous_steps['prefs']['sitetheme'].'/');
+			define('THEME_ABS', e_THEME_ABS.$this->previous_steps['prefs']['sitetheme'].'/');
+		}
+		if(!defined('USERCLASS_LIST'))
+		{
+			define('USERCLASS_LIST', '253,247,254,250,251,0');
+		}
+
+		$htaccessError = $this->htaccess();
+		$this->saveFileTypes();
+
+		installLog::add('Unattended install started');
+		$errors = $this->create_tables();
+		if(!empty($errors))
+		{
+			return array('errors' => $errors, 'htaccess' => $htaccessError);
+		}
+
+		installLog::add('Tables created successfully');
+		$this->import_configuration();
+		installLog::add('Unattended install completed');
+
+		return array('errors' => null, 'htaccess' => $htaccessError);
+	}
+
+	/**
 	 * Import and generate preferences and default content.
 	 *
 	 * @return boolean
@@ -2323,6 +2369,79 @@ class e_forms
 		$this->opened = false;
 		return $this->form;
 	}
+}
+
+function create_tables_unattended()
+{
+	//If username or password not specified, exit
+	if(!isset($_GET['username']) || !isset($_GET['password']))
+	{
+		return false;
+	}
+
+	$mySQLserver = null;
+	$mySQLuser = null;
+	$mySQLpassword = null;
+	$mySQLdefaultdb = null;
+	$mySQLprefix = null;
+
+	if(file_exists('e107_config.php'))
+	{
+		$config = @include('e107_config.php');
+	} else {
+		return false;
+	}
+
+	if(is_array($config) && !empty($config['database'])) // New e107_config.php format. v2.4+
+	{
+		$dbInfo = $config['database'];
+		$mySQLserver    = $dbInfo['server']   ?? null;
+		$mySQLuser      = $dbInfo['user']     ?? null;
+		$mySQLpassword  = $dbInfo['password'] ?? null;
+		$mySQLdefaultdb = $dbInfo['db']       ?? null;
+		$mySQLprefix    = $dbInfo['prefix']   ?? null;
+	}
+
+	//If mysql info not set, config file is not created properly
+	if(!isset($mySQLuser) || !isset($mySQLpassword) || !isset($mySQLdefaultdb) || !isset($mySQLprefix))
+	{
+		return false;
+	}
+
+	// If specified username and password does not match the ones in config, exit
+	if(!hash_equals((string) $mySQLuser, (string) $_GET['username'])
+		|| !hash_equals((string) $mySQLpassword, (string) $_GET['password']))
+	{
+		return false;
+	}
+
+	$einstall = new e_install();
+	$einstall->previous_steps['mysql']['server'] 	= $mySQLserver;
+	$einstall->previous_steps['mysql']['user']		= $mySQLuser;
+	$einstall->previous_steps['mysql']['password'] 	= $mySQLpassword;
+	$einstall->previous_steps['mysql']['db'] 		= $mySQLdefaultdb;
+	$einstall->previous_steps['mysql']['prefix'] 	= $mySQLprefix;
+
+	$einstall->previous_steps['language'] 			= (isset($_GET['language']) ? $_GET['language'] : 'English');
+
+	$einstall->previous_steps['admin']['display']  	= (isset($_GET['admin_display']) ? $_GET['admin_display'] : 'admin');
+	$einstall->previous_steps['admin']['user']  	= (isset($_GET['admin_user']) ? $_GET['admin_user'] : 'admin');
+	$einstall->previous_steps['admin']['password']  = (isset($_GET['admin_password']) ? $_GET['admin_password'] : 'admin_password');
+	$einstall->previous_steps['admin']['email']  	= (isset($_GET['admin_email']) ? $_GET['admin_email'] : 'admin_email@xxx.com');
+
+	$einstall->previous_steps['generate_content'] 	= isset($_GET['gen']) ? (int) $_GET['gen'] : 1;
+	$einstall->previous_steps['install_plugins'] 	= isset($_GET['plugins']) ? (int) $_GET['plugins'] : 1;
+	$einstall->previous_steps['prefs']['sitename'] 	= isset($_GET['sitename']) ? urldecode($_GET['sitename']) : LANINS_113;
+	$einstall->previous_steps['prefs']['sitetheme'] = isset($_GET['theme']) ? urldecode($_GET['theme']) : DEFAULT_INSTALL_THEME;
+
+	$result = $einstall->runUnattendedInstall();
+	if(!empty($result['errors']))
+	{
+		installLog::add('Unattended install failed: '.$result['errors'], 'error');
+		return false;
+	}
+
+	return true;
 }
 
 class SimpleTemplate
