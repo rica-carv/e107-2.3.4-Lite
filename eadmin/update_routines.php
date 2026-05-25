@@ -636,7 +636,7 @@ function update_core_database($type = '')
 		$just_check = !($type == 'do');
 		$pref = e107::getPref();
 
- 	
+	    // LITE FEATURE — do not remove when syncing from upstream.
 		if(!$just_check)
 		{
 			if(e107::getConfig()->get('admincss') !== 'css/admin-exas-core.css')
