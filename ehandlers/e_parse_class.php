@@ -3845,6 +3845,7 @@ class e_parse
 	public function lanVars($lan, $vals, $bold = false)
 	{
 
+		$lan = defset($lan, $lan);	
 		$array = (!is_array($vals)) ? array('x' => $vals) : $vals;
 
 		$search = array();
