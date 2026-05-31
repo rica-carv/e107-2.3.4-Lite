@@ -3207,7 +3207,7 @@ class e_parse
 
 			$replace = ((string) $mode === 'full' || (string) $mode === 'abs') ? $replace_absolute : $replace_relative;
 
-			return str_replace($search, $replace, $text);
+			return !empty($text) ? str_replace($search, $replace, $text) : $text;
 		}
 
 //		$pattern = ($all ? "#\{([A-Za-z_0-9]*)\}#s" : "#\{(e_[A-Z]*)\}#s");
